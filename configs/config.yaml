@@ -1,0 +1,51 @@
+# =====================================================================
+# Cấu hình dùng chung cho toàn nhóm — MỌI hằng số & mốc thời gian ở đây.
+# Sửa ở đây, KHÔNG hardcode rải rác trong code. (P1 sở hữu; đổi phải báo nhóm.)
+# =====================================================================
+
+seed: 42
+horizon: 28                 # độ dài dự báo chuẩn M5 (28 ngày)
+
+# --- Split theo thời gian (actuals tối đa có = d_1941 từ sales_train_evaluation) ---
+# Cửa sổ "gốc" (window 1). Rolling-origin trượt lùi tạo thêm cửa sổ (xem rolling bên dưới).
+split:
+  train_end: 1885           # train = d_1 .. d_1885
+  val_end:   1913           # val   = d_1886 .. d_1913  (tune + hiệu chuẩn conformal)
+  test_end:  1941           # test  = d_1914 .. d_1941  (28 ngày)
+  max_actual_day: 1941      # KHÔNG có actuals cho d_1942..1969 trong bộ này
+
+# --- Rolling-origin: BẮT BUỘC >=3 cửa sổ test 28 ngày trượt liên tiếp về quá khứ ---
+# Mỗi cửa sổ lùi <step> ngày so với cửa sổ trước. Tất cả nằm trong actuals (<= max_actual_day).
+rolling:
+  n_windows: 3
+  step: 28                  # khoảng lùi giữa các cửa sổ (= horizon => không chồng lấn)
+  # W1: test 1914-1941 | W2: test 1886-1913 | W3: test 1858-1885 (sinh tự động từ splits.py)
+
+# --- 9 mức quantile chuẩn M5 Uncertainty ---
+quantiles: [0.005, 0.025, 0.165, 0.25, 0.5, 0.75, 0.835, 0.975, 0.995]
+
+# --- Ngưỡng phân nhóm SBC (Syntetos-Boylan-Croston) ---
+sbc:
+  adi_threshold: 1.32
+  cv2_threshold: 0.49
+
+# --- Quy tắc lấy mẫu phân tầng (ưu tiên đầy đủ: lấy toàn bộ nhóm hiếm, cap nhóm phổ biến) ---
+sampling:
+  rule: "keep_rare_cap_common"   # lấy toàn bộ smooth+erratic, cap intermittent+lumpy
+  cap: 1000                      # cỡ tối đa mỗi nhóm phổ biến (intermittent, lumpy)
+  # -> ~ smooth(980)+erratic(494)+intermittent(1000)+lumpy(1000) ≈ 3474 chuỗi
+
+# --- Foundation models (nhẹ, chạy được CPU cho pilot) ---
+foundation:
+  chronos_model:   "amazon/chronos-bolt-base"
+  chronos_context: 512
+  ttm_model:       "ibm-granite/granite-timeseries-ttm-r2"
+  ttm_context:     512
+
+# --- Đường dẫn (tương đối repo root) ---
+paths:
+  raw_dir:        "data/raw"
+  processed_dir:  "data/processed"
+  outputs_dir:    "outputs"
+  forecasts_dir:  "outputs/forecasts"
+  configs_dir:    "configs"

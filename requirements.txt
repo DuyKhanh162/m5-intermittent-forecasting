@@ -1,0 +1,30 @@
+# =====================================================================
+# Version PIN — đúng môi trường đã chạy pilot thành công (CPU-only, Windows/py3.11).
+# PLAN_REVISED yêu cầu pin FM để tránh lệch version torch. Cài: pip install -r requirements.txt
+# GPU chỉ cần cho: full 30.490 / few-shot / Moirai-2 (cài torch bản CUDA riêng nếu có GPU).
+# =====================================================================
+
+# --- Lõi xử lý dữ liệu & test ---
+pandas==2.3.3
+numpy==2.2.6
+pyarrow==25.0.1
+scipy==1.17.1
+PyYAML==6.0.3
+matplotlib==3.10.3
+nbformat==5.10.4
+pytest==9.1.1
+
+# --- Machine learning (P3) ---
+lightgbm==4.7.0
+
+# --- Cổ điển: Croston/SBA/TSB/Naive/SeasonalNaive (P4) ---
+statsforecast==2.1.1
+utilsforecast==0.2.16
+
+# --- Foundation models (P4) — zero-shot CPU OK ---
+torch==2.11.0
+transformers==5.17.0
+accelerate==1.15.0
+chronos-forecasting==2.3.2      # Chronos-Bolt; API: predict_quantiles(inputs=...)
+granite-tsfm==0.3.9             # TTM (import: tsfm_public)
+# Moirai-2 (stretch): uni2ts — thêm khi triển khai, ghi rõ version khi pin.

@@ -1,0 +1,32 @@
+# =====================================================================
+# Dữ liệu lớn — KHÔNG commit (vượt giới hạn 100MB GitHub). Tái tạo bằng:
+#   python scripts/download_data.py   (tải raw)
+#   make data                          (sinh data_long, deterministic seed 42)
+# =====================================================================
+raw-data/
+data/raw/
+data/processed/
+*.zip
+
+# Cho phép giữ khung thư mục data/ trống
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- OS / IDE ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Claude Code local ---
+.claude/
