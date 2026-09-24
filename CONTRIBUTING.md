@@ -2,6 +2,16 @@
 
 Nhóm 5 người, **P1 điều phối**. Nhánh `main` luôn ở trạng thái chạy được.
 
+## Trạng thái bảo vệ nhánh `main`
+CI (`.github/workflows/ci.yml`) **đã chạy tự động** trên mọi PR/push (pytest) — kiểm tra tự động
+hoạt động bình thường trên repo private free.
+
+> ⚠️ **Ép buộc server-side (chặn merge khi thiếu approval / CI đỏ) hiện CHƯA bật** vì GitHub Free
+> yêu cầu repo **public** hoặc **GitHub Pro** cho branch protection/ruleset trên repo private.
+> Để bật thật sự (giữ private): P1 xin **GitHub Student Developer Pack** (miễn phí Pro cho sinh viên)
+> tại https://education.github.com/pack rồi vào **Settings → Branches/Rules** thêm rule cho `main`
+> (require PR + 1 approval + status check `test`). Trong lúc chờ: **tuân thủ quy trình bên dưới bằng kỷ luật nhóm.**
+
 ## Vòng đời một đầu việc
 1. **Tạo issue** theo template (bước nào, ai, phụ thuộc gì, hạn).
 2. **Tạo branch** từ `main` theo quy ước: `p<n>/buoc-<k>-<mô-tả-ngắn>`
