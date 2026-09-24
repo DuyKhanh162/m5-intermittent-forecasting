@@ -3,7 +3,7 @@
 Chuyên đề thạc sĩ KHDL. Câu hỏi lõi: **"nhu cầu nào → dùng model nào"**, phân nhóm theo đặc tính
 demand (SBC), dự báo xác suất. Dữ liệu: [M5 Walmart](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data).
 
-## Cấu trúc (tối giản)
+## Cấu trúc
 ```
 common/      # THỨ CỐ ĐỊNH, dùng chung — không tự sửa
   config.yaml            # mọi tham số: seed, split, quantile, ngưỡng SBC, model FM...
@@ -38,7 +38,7 @@ pip install -r requirements.txt
 ```
 > Ai làm việc gì: xem cell tiêu đề đầu mỗi `P<n>.ipynb`. Kế hoạch đầy đủ: `docs/plan/PLAN_REVISED.md`.
 
-## Quy tắc vàng
+## Quy tắc
 1. Không sửa `common/` (tham số/mẫu/nhãn cố định) nếu chưa báo P1.
 2. Không shuffle — tôn trọng trục thời gian. ML dùng **lag ≥ 28**. Chỉ tune/hiệu chuẩn trên validation.
 3. Forecast lưu đúng khuôn: cột `series_id, date, d_int, quantile_level, value, model`.
