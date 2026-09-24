@@ -1,0 +1,4 @@
+window,train_end,val_end,test_start,test_end
+W1,1885,1913,1914,1941
+W2,1857,1885,1886,1913
+W3,1829,1857,1858,1885
