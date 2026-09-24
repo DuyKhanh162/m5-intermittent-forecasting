@@ -1,7 +1,10 @@
 # Dữ liệu NẶNG / tái tạo được — KHÔNG commit.
-# (data/raw = M5 thô ~500MB, mỗi người tự tải; data/processed = data_long, sinh bằng P1.ipynb)
-# data/outputs/ THÌ COMMIT vì là "mối nối" forecast P3/P4 -> P5.
-data/raw/
+# data/raw: chỉ commit calendar.csv (nhỏ, P4 cần); các file M5 lớn thì bỏ.
+# data/processed: data_long — sinh bằng P1.ipynb (P1 gửi file cho nhóm).
+# data/outputs: THÌ COMMIT (mối nối forecast P3/P4 -> P5).
+data/raw/*
+!data/raw/calendar.csv
+!data/raw/.gitkeep
 data/processed/
 *.zip
 
