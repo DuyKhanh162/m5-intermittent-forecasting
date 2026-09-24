@@ -6,6 +6,9 @@ mạnh nhất"), phân nhóm theo đặc tính demand (SBC), dự báo xác su�
 Dữ liệu: [M5 Walmart](https://www.kaggle.com/competitions/m5-forecasting-accuracy/data) —
 30.490 chuỗi (sản phẩm × cửa hàng), ~1.941 ngày. 95% chuỗi là intermittent + lumpy.
 
+> 🚀 **Thành viên mới bắt đầu tại đây:** [`docs/ONBOARDING.md`](docs/ONBOARDING.md) — hướng dẫn
+> chi tiết từ số 0 (cài đặt, quy trình Git đồng bộ, mỗi người làm gì, sự cố thường gặp).
+
 ## Bắt đầu nhanh
 ```bash
 pip install -r requirements.txt          # hoặc: make setup
