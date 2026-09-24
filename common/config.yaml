@@ -46,6 +46,6 @@ foundation:
 paths:
   raw_dir:        "data/raw"
   processed_dir:  "data/processed"
-  outputs_dir:    "outputs"
-  forecasts_dir:  "outputs/forecasts"
-  configs_dir:    "configs"
+  outputs_dir:    "data/outputs"
+  forecasts_dir:  "data/outputs/forecasts"
+  common_dir:     "common"
