@@ -3,7 +3,7 @@
 
 export PYTHONUTF8 = 1
 
-.PHONY: setup data data-full test pilot notebook clean
+.PHONY: setup data data-full test smoke pilot notebook clean
 
 setup:            ## Cài dependency (pin version)
 	pip install -r requirements.txt
@@ -18,8 +18,11 @@ data-full:        ## Sinh data_long cho TOÀN BỘ 30.490 chuỗi (nặng, cần
 test:             ## Chạy unit test (không cần raw data)
 	python -m pytest tests/ -q
 
-pilot:            ## Chạy lại smoke-test pipeline pilot từ notebook
+smoke:            ## Smoke-test nhanh pipeline pilot (thu nhỏ 40/nhóm)
 	python tests/smoke_test.py
+
+pilot:            ## Chạy lại pilot ĐẦY ĐỦ (200/nhóm, có FM) -> tái tạo outputs/
+	python scripts/run_pilot.py
 
 notebook:         ## Dựng lại notebook pilot từ build_notebook.py
 	python build_notebook.py
