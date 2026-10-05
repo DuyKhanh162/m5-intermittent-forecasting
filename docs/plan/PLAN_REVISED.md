@@ -124,8 +124,11 @@ bằng parquet + downcast/polars (đã kiểm chứng chạy tốt).
 
 **[MỚI] Version pinning & lưu ý FM:** pin `chronos-forecasting`, `granite-tsfm`, `statsforecast`, `lightgbm`.
 Chronos-Bolt gọi **`predict_quantiles(inputs=..., prediction_length=..., quantile_levels=...)`**.
-**Cảnh báo rò rỉ pre-training:** Chronos/TTM nhiều khả năng đã thấy M5 → mọi kết quả zero-shot phải diễn
-giải thận trọng (đây là cảnh báo chính, không phải ghi chú phụ).
+**[SỬA 2026-10-05] Lưu ý rò rỉ pre-training (đã kiểm nguồn):** M5 là **tập zero-shot giữ ngoài training**
+của Chronos/Chronos-Bolt (Benchmark II — Ansari et al. 2024, arXiv:2403.07815) và **không nằm trong
+Monash+LibCity** của TTM (Ekambaram et al. 2024, arXiv:2401.03955) → **rủi ro rò rỉ trực tiếp thấp**. Vẫn
+diễn giải zero-shot thận trọng (corpus Chronos-Bolt không công bố đầy đủ), nhưng **không còn là "cảnh báo
+chính"** như giả định ban đầu.
 
 Đồng bộ & seed: `configs/sample_ids.csv` + `configs/config.yaml` (`seed: 42`), sinh một lần bởi P2.
 
@@ -172,7 +175,7 @@ retail; bộ M5 Kaggle). **[MỚI] Bổ sung:**
 - Conformal prediction cho time series (calibration công bằng đa mô hình).
 - Koning/Makridakis MCB & Diebold–Mariano (kiểm định độ chênh dự báo).
 - Chronos-Bolt / Moirai-2 (Moirai-MoE) / TTM (IBM Granite) — cập nhật khi triển khai FM 2026, **pin version**.
-- **Cảnh báo rò rỉ dữ liệu pre-training** khi diễn giải zero-shot.
+- **Rủi ro rò rỉ pre-training thấp** (M5 là zero-shot benchmark của Chronos; không có trong corpus TTM) — vẫn diễn giải zero-shot thận trọng.
 
 ---
 
