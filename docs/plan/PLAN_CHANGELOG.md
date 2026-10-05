@@ -127,6 +127,9 @@ transformers, granite-tsfm, pyarrow) cài & chạy OK trên CPU.
   **full 30.490 / few-shot / Moirai-2**. Ghi runtime thực đo (Chronos-Bolt ~7s, TTM ~1–3s / vài trăm chuỗi).
 - **THÊM lưu ý rò rỉ pre-training** (Chronos/TTM nhiều khả năng đã thấy M5) — nâng từ "gợi ý" lên **cảnh báo
   diễn giải chính** cho mọi kết quả zero-shot.
+  - **[ĐÍNH CHÍNH 2026-10-05]** Đã kiểm nguồn: M5 là **tập zero-shot giữ ngoài training** của Chronos/
+    Chronos-Bolt (Benchmark II — arXiv:2403.07815) và **không có trong Monash+LibCity** của TTM
+    (arXiv:2401.03955) → **rủi ro rò rỉ trực tiếp THẤP**, hạ khỏi mức "cảnh báo chính" (xem PLAN_REVISED Mục 5).
 - **THÊM version pinning** cho FM vào phần thiết lập/tham khảo.
 
 ---
