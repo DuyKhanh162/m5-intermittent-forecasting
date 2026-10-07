@@ -1,5 +1,5 @@
 {
-  "python": "3.13.11",
+  "python": "3.11.4",
   "lightgbm": "4.7.0",
   "seed": 42,
   "horizon": 28,
