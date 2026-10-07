@@ -27,4 +27,6 @@ transformers==5.17.0
 accelerate==1.15.0
 chronos-forecasting==2.3.2      # Chronos-Bolt; API: predict_quantiles(inputs=...)
 granite-tsfm==0.3.9             # TTM (import: tsfm_public)
-# Moirai-2 (stretch): uni2ts — thêm khi triển khai, ghi rõ version khi pin.
+# Moirai-2 (P4, đã triển khai): cài trong venv RIÊNG `.venv-moirai` (xung đột deps với env chính):
+#   python -m venv .venv-moirai && .venv-moirai/Scripts/pip install uni2ts==2.0.0 pyarrow
+# PIN đã kiểm chứng: uni2ts==2.0.0 (model Salesforce/moirai-2.0-R-small).
