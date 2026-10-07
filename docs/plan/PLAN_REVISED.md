@@ -118,6 +118,13 @@ cổ điển + TTM **bọc Negative Binomial**) ⇒ SPL/coverage đo lẫn cả 
   hành vi gốc (vd kẹp đuôi Chronos, thừa phủ của NB).
 - 9 mức quantile M5 giữ nguyên `[0.005,0.025,0.165,0.25,0.5,0.75,0.835,0.975,0.995]`.
 
+**[SỬA 2026-10-07] Hợp đồng INPUT hiệu chuẩn (làm rõ — plan cũ chưa nói ai nộp gì, ở đâu):**
+- Mỗi chủ model nộp forecast **RAW** cho CẢ hai phần, cùng 6 cột · đủ 9 quantile · đủ 3 cửa sổ (cột `window`):
+  **test** → `outputs/forecasts/<model>.parquet`; **validation** → `outputs/forecasts/val/<model>.parquet`.
+  P5 bắt buộc cần bản **validation** để fit split-conformal. (P3 đã có `p3/lgbm_validation.parquet` — chỉ cần đưa về `forecasts/val/lgbm.parquet`.)
+- **Bản calibrated do P5 sinh** bằng `common/calibration.py` dùng chung — P3/P4 **KHÔNG** tự tạo file `*_cal`.
+  → "raw + calibrated" ở mục P3/P4 nghĩa là: P3/P4 nộp **RAW (test + validation)**, P5 xuất **CALIBRATED**.
+
 **Ba mối nối đông cứng (cập nhật):**
 1. Schema dữ liệu long.
 2. Format forecast: `series_id, date, quantile_level, value` (thêm `d_int` nội bộ để join).
@@ -154,10 +161,10 @@ mất cân bằng**, và **sinh nhãn cho full 30.490** để phục vụ weight
 ### P3 — Machine learning & mô hình cổ điển
 Feature lag/rolling/days-since-last-sale/calendar/price. **[LƯU Ý leak-free]** dùng lag ≥ horizon để cả
 28 ngày test tính được từ dữ liệu ≤ ngày gốc. LightGBM global; 9 quantile bằng quantile regression native.
-**[SỬA]** Xuất **bản raw và bản calibrated** (qua giao thức chung với P5). Two-stage là ablation tùy chọn.
-Output: `outputs/forecasts/lgbm.parquet` (+ `lgbm_cal.parquet`), feature importance + config.
+**[SỬA]** Nộp **RAW test + RAW validation** (xem hợp đồng input hiệu chuẩn, Mục 5); bản calibrated do P5 sinh. Two-stage là ablation tùy chọn.
+Output (RAW): `outputs/forecasts/lgbm.parquet` (test) + `outputs/forecasts/val/lgbm.parquet` (validation), feature importance + config.
 **[SỬA 2026-10-05]** P3 cũng phụ trách **mô hình cổ điển: Naive, SeasonalNaive(7), Croston, SBA, TSB**
-(statsforecast; point → NB → conformal chung với P5) → `forecasts/{naive,snaive,croston,sba,tsb}.parquet`.
+(statsforecast; point → NB raw, P5 hiệu chuẩn) → `forecasts/{naive,snaive,croston,sba,tsb}.parquet` (kèm bản validation ở `forecasts/val/`).
 **Tất cả 6 model chạy trên MẪU CHUNG** (`sample_ids`: 3.474 chuỗi × 3 cửa sổ theo `common/`) để **đồng bộ
 quy mô với FM của P4** — điều kiện bắt buộc để P5 so sánh công bằng (P5 có "hợp đồng lưới" loại mọi forecast lệch).
 
@@ -166,8 +173,9 @@ quy mô với FM của P4** — điều kiện bắt buộc để P5 so sánh c�
 gồm foundation model.
 FM (chạy mẫu): **Chronos-Bolt (base) + TTM** zero-shot (đã kiểm chứng CPU); Moirai-2 là **stretch goal**;
 few-shot nếu kịp (cần GPU). **[SỬA]** Ghi cấu hình Chronos (`predict_quantiles(inputs=...)`, kẹp đuôi
-[0.1,0.9]), TTM (context 512, PL 96 → cắt 28). Đo runtime/tài nguyên mỗi FM. Output: các `*.parquet` cùng
-format (raw + calibrated) + bảng runtime/cấu hình.
+[0.1,0.9]), TTM (context 512, PL 96 → cắt 28). Đo runtime/tài nguyên mỗi FM.
+Output (RAW): forecast **test** `outputs/forecasts/<fm>.parquet` **+ validation** `outputs/forecasts/val/<fm>.parquet`
+(đủ 3 cửa sổ · 9 quantile) + bảng runtime/cấu hình. **Bản calibrated do P5 sinh** (Mục 5). ⚠️ Hiện FM mới có bản test, **thiếu bản validation**.
 
 ### P5 — Giao thức xác suất, đánh giá & tổng hợp
 **[SỬA/MỞ RỘNG]** Chốt `src/common/` (`metrics.py`, `forecast_io.py`, **`calibration.py`** — split-conformal

@@ -1,5 +1,20 @@
 # Changelog cho Plan nghiên cứu — sau khi chạy thử thực tế trên M5
 
+## [2026-10-07b] Làm rõ hợp đồng input hiệu chuẩn (P3/P4 → P5)
+
+**Vấn đề:** plan bắt buộc split-conformal "trên validation cho TẤT CẢ model" + "raw + calibrated" nhưng
+**không nói ai nộp forecast validation, ở đâu, và ai sinh bản calibrated**. Hậu quả: P3-lgbm tự đoán đúng
+(có `lgbm_validation.parquet`); P4 (FM) **thiếu forecast validation** → P5 không fit được conformal cho FM.
+
+**Sửa (Mục 5 + mục P3/P4):** (1) Mỗi model nộp **RAW test** (`forecasts/<model>.parquet`) **+ RAW validation**
+(`forecasts/val/<model>.parquet`), đủ 9 quantile × 3 cửa sổ. (2) **Bản calibrated do P5 sinh** bằng
+`common/calibration.py`; P3/P4 không tự tạo `*_cal`.
+
+**Lưu ý phân biệt:** 5 model cổ điển thiếu là do **P3 chưa làm** (plan trên main đã ghi rõ từ 2026-10-05),
+KHÔNG phải plan mờ. Phần forecast-validation mới là chỗ plan mờ và vừa được làm rõ ở đây.
+
+---
+
 ## [2026-10-07] Chốt quy mô — chống scale-mismatch giữa P3 và P4
 
 **Vấn đề:** output P3 cũ (lgbm + 5 cổ điển) là **800 chuỗi × 1 cửa sổ** (đồ pilot), trong khi FM của P4
