@@ -90,8 +90,14 @@ Thay bằng một trong hai (chốt trong `config.yaml`):
 
 **[MỚI] Hai góc báo cáo (bắt buộc cả hai):**
 1. **Balanced-per-segment** — để so sánh theo *đặc tính* chuỗi (trục phân tích chính).
-2. **Frequency-weighted / full 30.490** (cổ điển + LightGBM chạy full; FM chạy mẫu) — để phản ánh *vận hành*
-   thật, tránh việc trung bình gộp 4 nhóm cân bằng thổi phồng smooth/erratic ~30× so với tần suất thật.
+2. **Frequency-weighted** — **MỌI mô hình (cổ điển, LightGBM, FM) chạy trên CÙNG mẫu 3.474 chuỗi × 3 cửa sổ**;
+   góc "vận hành" được tạo bằng cách **gia trọng metric theo tần suất nhóm thật** (lấy từ `segment_labels`
+   đầy đủ 30.490), **KHÔNG** chạy forecast full 30.490 — vừa phản ánh vận hành thật vừa khả thi, và tránh
+   việc trung bình gộp 4 nhóm cân bằng thổi phồng smooth/erratic ~30× so với tần suất thật.
+
+> **[SỬA 2026-10-07] Chốt quy mô (đồng bộ với P1/P2/P4 đã xong):** không có bước chạy full 30.490 chuỗi.
+> `data_long` do P1 sinh = đúng 3.474 chuỗi của `sample_ids`; full 30.490 **chỉ** dùng ở P2 để sinh nhãn nhóm
+> phục vụ gia trọng. "full-scale" trong plan = **3.474 chuỗi × 3 cửa sổ**, không phải 30.490.
 
 **[SỬA] Rolling-origin: BẮT BUỘC ≥3 cửa sổ test 28 ngày trượt liên tiếp** (không còn "nếu compute cho
 phép"). Lý do: pilot 1 cửa sổ cho chênh lệch 2–3% ⇒ không phân biệt được mô hình.
@@ -118,9 +124,9 @@ cổ điển + TTM **bọc Negative Binomial**) ⇒ SPL/coverage đo lẫn cả 
 3. **[SỬA]** "Giao thức hiệu chuẩn chung" (không chỉ là cách phát quantile cho model điểm): NB/native →
    **conformal calibration dùng chung**, hàm ở `src/common/`.
 
-**[SỬA] Phần cứng.** **CPU đủ cho pilot** (Chronos-Bolt ~7s, TTM ~1–3s cho vài trăm chuỗi). **GPU chỉ cần
-cho:** full 30.490 chuỗi, few-shot, và Moirai-2. FM dùng size small/base + fp16 khi có GPU. Full-data xử lý
-bằng parquet + downcast/polars (đã kiểm chứng chạy tốt).
+**[SỬA] Phần cứng.** **CPU đủ cho toàn bộ mẫu 3.474 chuỗi × 3 cửa sổ** (Chronos-Bolt ~7s, TTM ~1–3s cho
+vài trăm chuỗi; chạy theo lô vẫn khả thi trên CPU). **GPU chỉ cần cho:** few-shot và Moirai-2 (stretch).
+FM dùng size small/base + fp16 khi có GPU. Dữ liệu xử lý bằng parquet + downcast/polars (đã kiểm chứng chạy tốt).
 
 **[MỚI] Version pinning & lưu ý FM:** pin `chronos-forecasting`, `granite-tsfm`, `statsforecast`, `lightgbm`.
 Chronos-Bolt gọi **`predict_quantiles(inputs=..., prediction_length=..., quantile_levels=...)`**.
@@ -145,15 +151,19 @@ CV²=0.49) → 4 nhóm. **[SỬA]** Sinh mẫu theo quy tắc mới (N≤400/nh�
 mất cân bằng**, và **sinh nhãn cho full 30.490** để phục vụ weighting. Output: `data/segment_labels.parquet`
 (cho toàn bộ), `configs/sample_ids.csv`, bảng phân bố nhóm (đối chiếu Mục 4).
 
-### P3 — Mô hình machine learning
+### P3 — Machine learning & mô hình cổ điển
 Feature lag/rolling/days-since-last-sale/calendar/price. **[LƯU Ý leak-free]** dùng lag ≥ horizon để cả
 28 ngày test tính được từ dữ liệu ≤ ngày gốc. LightGBM global; 9 quantile bằng quantile regression native.
 **[SỬA]** Xuất **bản raw và bản calibrated** (qua giao thức chung với P5). Two-stage là ablation tùy chọn.
 Output: `outputs/forecasts/lgbm.parquet` (+ `lgbm_cal.parquet`), feature importance + config.
+**[SỬA 2026-10-05]** P3 cũng phụ trách **mô hình cổ điển: Naive, SeasonalNaive(7), Croston, SBA, TSB**
+(statsforecast; point → NB → conformal chung với P5) → `forecasts/{naive,snaive,croston,sba,tsb}.parquet`.
+**Tất cả 6 model chạy trên MẪU CHUNG** (`sample_ids`: 3.474 chuỗi × 3 cửa sổ theo `common/`) để **đồng bộ
+quy mô với FM của P4** — điều kiện bắt buộc để P5 so sánh công bằng (P5 có "hợp đồng lưới" loại mọi forecast lệch).
 
-### P4 — Mô hình cổ điển & foundation model
-Cổ điển: Naive, SeasonalNaive(7), Croston, SBA, TSB (statsforecast). **[SỬA]** point → phân phối thô bằng
-NB, **rồi qua conformal calibration chung** (đồng sở hữu với P5) — NB không còn là bước cuối.
+### P4 — Foundation models
+**[SỬA 2026-10-05]** Mô hình cổ điển đã chuyển về **P3** (khớp bảng phân công trong PLAN.md); P4 **chỉ**
+gồm foundation model.
 FM (chạy mẫu): **Chronos-Bolt (base) + TTM** zero-shot (đã kiểm chứng CPU); Moirai-2 là **stretch goal**;
 few-shot nếu kịp (cần GPU). **[SỬA]** Ghi cấu hình Chronos (`predict_quantiles(inputs=...)`, kẹp đuôi
 [0.1,0.9]), TTM (context 512, PL 96 → cắt 28). Đo runtime/tài nguyên mỗi FM. Output: các `*.parquet` cùng
