@@ -12,6 +12,7 @@ data/processed/
 __pycache__/
 *.py[cod]
 .venv/
+.venv-moirai/
 venv/
 .ipynb_checkpoints/
 

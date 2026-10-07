@@ -1,5 +1,37 @@
 # Changelog cho Plan nghiên cứu — sau khi chạy thử thực tế trên M5
 
+## [2026-10-07b] Làm rõ hợp đồng input hiệu chuẩn (P3/P4 → P5)
+
+**Vấn đề:** plan bắt buộc split-conformal "trên validation cho TẤT CẢ model" + "raw + calibrated" nhưng
+**không nói ai nộp forecast validation, ở đâu, và ai sinh bản calibrated**. Hậu quả: P3-lgbm tự đoán đúng
+(có `lgbm_validation.parquet`); P4 (FM) **thiếu forecast validation** → P5 không fit được conformal cho FM.
+
+**Sửa (Mục 5 + mục P3/P4):** (1) Mỗi model nộp **RAW test** (`forecasts/<model>.parquet`) **+ RAW validation**
+(`forecasts/val/<model>.parquet`), đủ 9 quantile × 3 cửa sổ. (2) **Bản calibrated do P5 sinh** bằng
+`common/calibration.py`; P3/P4 không tự tạo `*_cal`.
+
+**Lưu ý phân biệt:** 5 model cổ điển thiếu là do **P3 chưa làm** (plan trên main đã ghi rõ từ 2026-10-05),
+KHÔNG phải plan mờ. Phần forecast-validation mới là chỗ plan mờ và vừa được làm rõ ở đây.
+
+---
+
+## [2026-10-07] Chốt quy mô — chống scale-mismatch giữa P3 và P4
+
+**Vấn đề:** output P3 cũ (lgbm + 5 cổ điển) là **800 chuỗi × 1 cửa sổ** (đồ pilot), trong khi FM của P4
+(chronos_bolt, ttm, moirai_2) là **3.474 chuỗi × 3 cửa sổ** → bảng `metrics_by_model_segment.parquet` hiện
+tại so **lẫn quy mô**, không hợp lệ. Plan còn mâu thuẫn "full 30.490" (Mục 5) vs "3.474 × 3" (P3).
+
+**Sửa:** (1) Chốt **mọi model chạy trên cùng mẫu 3.474 chuỗi × 3 cửa sổ**; full 30.490 **chỉ** dùng ở P2 để
+sinh nhãn phục vụ gia trọng, **không** chạy forecast full. (2) Mục 5 góc 2 đổi "full 30.490" → "frequency-weighted
+bằng gia trọng theo tần suất nhóm thật". (3) Phần cứng: bỏ "GPU cho full 30.490". (4) Notebook P3 siết chặt:
+cell đầu nạp `sample_ids` & khóa về mẫu chung; cell cuối thêm **hợp đồng lưới** chặn lưu nếu lệch
+series/cửa sổ/quantile/giá trị âm; yêu cầu đủ 6 model. P5 đã có hợp đồng lưới tương ứng (loại forecast lệch).
+
+**Việc còn lại (chủ P3):** chạy lại 6 model full-scale thay 6 file pilot cũ → P5 tính lại metric.
+
+---
+
+
 **Ngày:** 2026-09-22
 **Nguồn bằng chứng:** notebook `M5_demand_forecasting_study.ipynb` chạy full 800 chuỗi
 (SAMPLE_PER_SEGMENT=200 × 4 nhóm, 1 cửa sổ test 28 ngày), các bảng trong `outputs/`
