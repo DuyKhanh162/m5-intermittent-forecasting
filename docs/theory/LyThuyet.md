@@ -216,13 +216,23 @@ Mạnh: linh hoạt, phân vị native. Yếu: **kẹp đuôi** → thiếu ph�
 
 **Split-conformal (phân phối tự do).** Trên **validation**: tính **sai số phân vị** (residual) của mỗi mô hình, lấy **offset** = order-statistic của residual theo **từng (nhóm × mức $\tau$)** (nguyên tắc Mondrian) → **cộng offset vào dự báo test**, rồi **sắp xếp** giữ đơn điệu, kẹp ≥ 0. Kết quả: mọi mô hình được **đưa về cùng một cây thước** → so sánh công bằng. Báo **cả bản raw lẫn calibrated**.
 
-**Vì sao conformal:** (i) không giả định phân phối; (ii) đảm bảo coverage hợp lệ nếu dữ liệu đổi chỗ được (exchangeable); (iii) tách **năng lực mô hình** khỏi cách vẽ dải.
+**NB vs conformal (không thay nhau).** **Bọc NB** *vẽ* dải (biến điểm → 9 phân vị, cá thể hoá theo mean/var từng chuỗi); **conformal** *chỉnh* vị trí/độ rộng dải đã có cho đúng coverage. Model phân vị (LightGBM, Moirai, Chronos) vào thẳng conformal; model điểm phải bọc NB trước vì conformal cần một $\hat q_\tau$ **sẵn có** để đo residual và dịch — nó **hiệu chỉnh** dải chứ không **tạo** dải.
+
+**Vì sao dùng split-conformal (kết luận).**
+1. **Đưa mọi model về cùng một cây thước.** Ba họ vẽ dải bằng 3 cơ chế khác nhau (FM native kẹp đuôi · cổ điển/TTM bọc-NB · Moirai nội suy); đo coverage thô là đo lẫn "lớp bọc", không phải năng lực thật. Conformal là lớp chỉnh **đồng nhất** áp y hệt cho mọi model ⇒ so sánh công bằng — mục tiêu cốt lõi của P5. (Vì vậy **không** để conformal tự dựng dải cho model điểm: nếu thế, model điểm có "dải do conformal dựng" còn FM có "dải native" → lại không cùng thước; bọc NB giữ conformal là lớp mỏng chung.)
+2. **Phân phối tự do.** FM kẹp đuôi (Chronos/Moirai cov95 ~0,75); chỉnh bằng công thức tham số thì phải giả định sai dạng. Conformal sửa **thực nghiệm**, kéo cov95 ~0,75 → ~0,95; nhóm bọc-NB vốn đã sát nên chỉnh ít.
+3. **Mondrian theo nhóm SBC.** `intermittent`/`lumpy` lệch coverage rất khác `smooth` → offset riêng từng nhóm tôn trọng tính không đồng nhất này.
+4. **Leak-free & hợp lệ.** Dùng validation chia theo thời gian + scale chỉ từ quá khứ ⇒ giữ tính **exchangeable** (đổi chỗ được) cho bảo đảm coverage.
+5. **Báo cả raw lẫn calibrated** → vừa cho thấy năng lực vẽ dải gốc, vừa cho bảng xếp hạng trên sân chơi bình đẳng.
 
 ---
 
 ## 6. Cách đánh giá (metric + kiểm định)
 
-### 6.1 Metric
+### 6.1 Metric — hai trục: độ phủ vs độ sắc
+
+**Hai trục (đánh đổi nhau).** Một dải tốt phải đạt **đồng thời**: **độ phủ** (calibration — hứa 95% thì phủ ~95%, đo bằng *coverage*) và **độ sắc** (sharpness — cùng độ phủ thì hẹp hơn tốt hơn, đo bằng *độ rộng dải* và *pinball*). Nới dải rộng → coverage đẹp nhưng vô dụng; thu hẹp → dễ thiếu phủ. **Dải hiệu quả = hẹp nhất mà vẫn phủ đúng.** Vì vậy project **không xếp hạng bằng coverage** mà bằng **pinball (SPL/WSPL)** — một **proper scoring rule** tự động phạt **cả hai trục** trong một con số: đặt sai chỗ (lệch coverage) bị phạt, dải rộng vô ích (phân vị xa $y$) cũng bị phạt; chỉ phân vị **đúng thật** mới tối thiểu hoá. Coverage/width/bias chỉ là **chẩn đoán** để giải thích *vì sao* pinball tốt/xấu.
+
 | Metric | Công thức (ý chính) | Đo gì |
 |---|---|---|
 | **MASE** | $\dfrac{\overline{\|y-\hat y\|}}{s_1}$, $s_1$ = MAE naive in-sample | độ chính xác điểm, **chuẩn hoá** để so giữa chuỗi |
@@ -233,13 +243,23 @@ Mạnh: linh hoạt, phân vị native. Yếu: **kẹp đuôi** → thiếu ph�
 
 Chuẩn hoá bằng scale naive **tính trên train** (leak-free) để so sánh được giữa các nhóm/chuỗi. Tổng hợp **hai cách**: *balanced* (đều 4 nhóm) và *frequency-weighted* (theo tỷ trọng 30.490 chuỗi).
 
+**Cơ chế pinball.** $\rho_\tau=\max(\tau d,\,(\tau-1)d)$ với $d=y-\hat q_\tau$: nếu $\hat q_\tau$ **thiếu** ($<y$) phạt hệ số $\tau$, **thừa** ($>y$) phạt $1-\tau$. Ở $\tau=0{,}975$ thiếu phủ bị phạt $0{,}975$ còn thừa chỉ $0{,}025$ → **ép phân vị cao phải đủ cao**; sự phi đối xứng này **neo** mỗi $\tau$ đúng chỗ (tối thiểu pinball ⟺ phân vị đúng). Trung bình pinball trên 9 mức ≈ **CRPS rời rạc hoá** → một số bao trùm toàn dải. **WSPL** = SPL gộp các chuỗi theo **trọng số doanh thu $** (28 ngày trước gốc) → phạt nặng hơn khi sai ở SKU đáng tiền.
+
+**Chẩn đoán kèm theo** (không xếp hạng): **width95** $=\overline{(\hat q_{0.975}-\hat q_{0.025})}/s_1$ (độ sắc) · **bias** $=\overline{(\hat q_{0.5}-y)}/s_1$ kèm over/under-rate (lệch lên/xuống). Bộ **coverage + width95 + bias** mở ra nguyên nhân mà một proper score (SPL/WSPL) giấu đi: SPL cao có thể do dải lệch (bias), quá rộng (width95), hay thiếu phủ (coverage).
+
 ### 6.2 Rolling-origin
 Chấm trên **3 cửa sổ** rồi tổng hợp → kết luận không phụ thuộc một gốc thời gian.
 
 ### 6.3 Kiểm định thống kê (vì sao: chênh nhỏ có thể do may rủi)
-- **Diebold–Mariano (DM):** so **chênh lệch hàm mất mát** $d_t = L^{(A)}_t - L^{(B)}_t$ giữa 2 model; thống kê $z = \bar d / \widehat{\text{SE}}(\bar d)$. Dùng **SE gom cụm theo chuỗi** (residual nhiều cửa sổ của cùng chuỗi phụ thuộc nhau) và **hiệu chỉnh đa so sánh Holm** (kiểm nhiều cặp).
-- **MCB (Multiple Comparison with the Best):** so **hạng trung bình** của mỗi model với best; khoảng tin cậy Nemenyi (critical distance). Dùng **tham chiếu**.
-- **Win rule (luật tuyên bố thắng):** một model "thua rõ" best khi **p (Holm) < 0,05 VÀ thua ở cả 3 cửa sổ**. "**Thắng rõ**" ⇔ chỉ best sống sót; ngược lại "**tương đương**" → chọn model **đơn giản/rẻ** trong nhóm tương đương.
+Đơn vị quan sát = **(chuỗi $i$, cửa sổ $t$)**; **best** = model có loss tổng hợp thấp nhất.
+
+- **Diebold–Mariano (DM · panel · cluster theo chuỗi).** Chênh loss $d_{i,t}=L^{(m)}_{i,t}-L^{(best)}_{i,t}$, trung bình (có trọng số $ với WSPL) $\text{est}=\dfrac{\sum w\,d}{\sum w}$. **SE gom cụm theo chuỗi:** $u_i=\sum_{t\in i} w\,(d-\text{est})$, $\text{SE}=\dfrac{\sqrt{\sum_i u_i^2}}{\sum w}$, $z=\text{est}/\text{SE}$, $p=2\Phi(-|z|)$; **hiệu chỉnh Holm** trên $k-1$ so sánh (best vs từng model). *Vì sao cluster:* nhiều cửa sổ của **cùng một SKU** phụ thuộc nhau → coi độc lập làm SE quá nhỏ, p giả nhỏ. *Vì sao Holm:* kiểm soát family-wise error, mạnh hơn Bonferroni. *Vì sao DM (không phải t-test/F-test):* DM **model-free**, chấm thẳng trên chuỗi loss bất kỳ, không cần model lồng nhau hay giả định phân phối — hợp panel 9 model khác họ.
+- **MCB (Multiple Comparison with the Best — tham chiếu).** Xếp hạng model trong mỗi đơn vị, lấy **hạng trung bình**; hai model khác nhau có ý nghĩa nếu chênh hạng vượt $\text{CD}=\dfrac{q_{\alpha,k,\infty}}{\sqrt2}\sqrt{\dfrac{k(k+1)}{6N}}$ (Nemenyi). Dựa **thứ hạng** → bền với outlier/thang đo, bổ khuyết cho DM (vốn dựa độ lớn).
+
+### 6.4 Win rule (luật tuyên bố thắng)
+`sig_worse(m)` = **p-Holm < 0,05** VÀ **đúng chiều thua** VÀ **best thắng $m$ ở cả 3 cửa sổ** ($n_{win}\ge3$). `tied` = best + các model **không** thua rõ. **"Thắng rõ"** ⇔ chỉ best sống sót; ngược lại **"tương đương"** → khuyến nghị model **rẻ nhất** trong `tied` (`COST_RANK`: naive/snaive rẻ nhất → moirai đắt nhất).
+
+*Vì sao đặt vậy:* (1) hai điều kiện **độc lập** chống dương tính giả — DM coi các chuỗi độc lập với nhau nên p hơi lạc quan; "thắng ở cả 3 cửa sổ" là rào **ít giả định** bù lại, loại các p nhỏ nhờ **một cửa sổ may**; (2) rất **bảo thủ** khi phong vương (chỉ 1 model sống sót mới "thắng rõ"); (3) tương đương → **chọn rẻ** (Occam + chi phí vận hành): không trả giá cho FM nặng khi model cổ điển làm ngang — cơ sở để P2 khuyến nghị triển khai.
 
 ---
 
