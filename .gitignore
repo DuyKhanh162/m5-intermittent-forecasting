@@ -16,6 +16,11 @@ __pycache__/
 venv/
 .ipynb_checkpoints/
 
+# Backup + file tạm Office (không commit)
+notebooks/_backup_predeai/
+~$*
+*.tmp
+
 # OS / IDE / Claude
 .DS_Store
 Thumbs.db
